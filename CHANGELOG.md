@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.2] - 2025-11-17
+
+### Fixed
+
+- **Container image tagging**: Fixed semver tag generation to properly create `X.Y.Z`, `X.Y`, `X` tags without 'v' prefix
+- **CI/CD workflow**: Tag pushes now always trigger the full workflow (build, test, publish), even when only non-code files changed
+- Previously, pushing a tag like `v3.0.1` after only changing CHANGELOG/workflow files would not trigger image builds
+
+### Changed
+
+- Simplified `docker/metadata-action` configuration for more reliable tag generation
+
 ## [3.0.1] - 2025-11-17
 
 ### Added
