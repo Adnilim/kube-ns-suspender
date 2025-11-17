@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.1] - 2025-11-17
+
+### Added
+
+- **Multi-architecture container images**: Images now built for both `linux/amd64` and `linux/arm64` platforms
+- Support for Apple Silicon (M1/M2/M3) and other ARM64 systems
+
+### Changed
+
+- **Container image tagging**: Semantic version tags now use version numbers without 'v' prefix
+  - Git tags: `v3.0.1` (with 'v')
+  - Container tags: `3.0.1`, `3.0`, `3`, `latest` (without 'v')
+- Updated GitHub Actions workflow to latest versions (v3-v5)
+- Added build caching for faster CI/CD builds
+- Updated `docker/build-push-action` to v5 with QEMU for cross-platform builds
+
 ## [3.0.0] - 2025-11-17
 
 ### Breaking Changes
