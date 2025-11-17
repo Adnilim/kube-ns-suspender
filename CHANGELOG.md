@@ -5,21 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.0.5] - 2025-11-17
+## [3.0.6] - 2025-11-17
 
 ### Fixed
 
-- **Critical**: Container tags now use **newline-separated format** instead of comma-separated
-  - `docker/build-push-action` requires tags to be newline-separated (one per line)
-  - Previous comma-separated format was being ignored, causing only first tag to be used
-- Use heredoc (EOF) to properly preserve newlines in GitHub Actions outputs
-- Tags now correctly generated: `3.0.5`, `3.0`, `3`, `latest` (all without 'v' prefix)
+- **CRITICAL**: Fixed container image tagging by updating the correct workflow file (`publish_image.yaml`)
+  - Previous attempts modified `test-k8s.yaml` which doesn't run for tag pushes
+  - Now properly generates semantic version tags: `X.Y.Z`, `X.Y`, `X`, `latest` (without 'v' prefix)
+  - Multi-architecture builds enabled (linux/amd64, linux/arm64)
+
+### Added
+
+- Multi-architecture support in release workflow (amd64 + arm64)
+- QEMU setup for cross-platform builds
+- Docker Buildx with GitHub Actions cache
+
+### Changed
+
+- Removed `docker/metadata-action` in favor of manual tag generation for full control
+- Tags now use newline-separated format (required by docker/build-push-action)
 
 ### Technical Details
 
-The root cause was tag format:
-- ❌ Wrong: `tag1,tag2,tag3` (comma-separated)
-- ✅ Correct: Multi-line format (newline-separated)
+Root cause: The `publish_image.yaml` workflow runs for tag pushes, not `test-k8s.yaml`.
+We were editing the wrong workflow file for the past 5 releases!
 
 ## [3.0.4] - 2025-11-17
 

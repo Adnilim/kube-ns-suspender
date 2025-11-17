@@ -12,7 +12,6 @@ env:
 jobs:
   build-and-push-image:
     runs-on: ubuntu-latest
-    # Permissions for the Built-in, auto-loaded secrets.GITHUB_TOKEN
     permissions:
       contents: read
       packages: write
@@ -30,23 +29,60 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata from Git and GitHub for Docker
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.IMAGE_NAME }}
+      - name: Set up QEMU for multi-architecture builds
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
       - name: Get current date
         id: date
         run: echo "BUILD_DATE=$(date +'%Y-%m-%d_%H:%M:%ST%Z')" >> $GITHUB_ENV
 
-      - name: Build and push Docker image
+      - name: Extract version and generate tags
+        id: version
+        run: |
+          REF="${{ github.ref }}"
+
+          # Remove 'refs/tags/' prefix
+          VERSION="${REF#refs/tags/}"
+          # Remove 'v' prefix if present
+          VERSION="${VERSION#v}"
+
+          echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
+          echo "Extracted version: ${VERSION}"
+
+          # Generate newline-separated tags for docker/build-push-action
+          TAGS="${{ env.IMAGE_NAME }}:${VERSION}
+          ${{ env.IMAGE_NAME }}:latest"
+
+          # Parse version and add X.Y and X tags if it's semver
+          if [[ $VERSION =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+            MAJOR="${BASH_REMATCH[1]}"
+            MINOR="${BASH_REMATCH[2]}"
+            TAGS="${TAGS}
+          ${{ env.IMAGE_NAME }}:${MAJOR}.${MINOR}
+          ${{ env.IMAGE_NAME }}:${MAJOR}"
+            echo "Semantic version tags: ${MAJOR}, ${MAJOR}.${MINOR}, ${VERSION}"
+          fi
+
+          # Use heredoc to preserve newlines in output
+          echo "TAGS<<EOF" >> $GITHUB_OUTPUT
+          echo "$TAGS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          echo "Final tags:"
+          echo "$TAGS"
+
+      - name: Build and push multi-architecture Docker image
         uses: docker/build-push-action@v6
         with:
           context: .
+          platforms: linux/amd64,linux/arm64
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.version.outputs.TAGS }}
           build-args: |
-            VERSION=${{ steps.meta.outputs.version }}
+            VERSION=${{ steps.version.outputs.VERSION }}
             BUILD_DATE=${{ env.BUILD_DATE }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
