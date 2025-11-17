@@ -32,6 +32,10 @@ env:
 jobs:
   changes:
     runs-on: ubuntu-latest
+    permissions:
+      statuses: write
+      pull-requests: read
+      contents: read
     outputs:
       run: ${{ steps.filter.outputs.run }}
     steps:
